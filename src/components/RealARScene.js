@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import Webcam from 'react-webcam';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const RealARScene = () => {
   const webcamRef = useRef(null);
@@ -111,13 +112,12 @@ const RealARScene = () => {
 
     const scene = sceneRef.current;
     
-    // Importa o GLTFLoader do Three.js
-    const { GLTFLoader } = require('three/examples/jsm/loaders/GLTFLoader.js');
+    // Cria o loader GLTF
     const loader = new GLTFLoader();
     
     // Carrega o modelo trozoba.glb
     loader.load(
-      '/trozoba.glb',
+      `${process.env.PUBLIC_URL}/trozoba.glb`,
       (gltf) => {
         const model = gltf.scene;
         
