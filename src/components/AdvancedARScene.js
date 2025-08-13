@@ -334,11 +334,12 @@ const AdvancedARScene = () => {
       
       const loader = new GLTFLoader();
       
-      // Usa o caminho da configuração ou fallback para o caminho padrão
+      // Usa PUBLIC_URL para garantir o caminho correto em desenvolvimento e produção
       const modelConfig = window.AR_CONFIG?.model || AR_CONFIG;
-      const modelFile = modelConfig.file || '/trozoba.glb';
+      const modelFile = modelConfig.file || `${process.env.PUBLIC_URL}/trozoba.glb`;
       
       console.log('Tentando carregar modelo de:', modelFile);
+      console.log('PUBLIC_URL:', process.env.PUBLIC_URL);
       console.log('Configuração do modelo:', modelConfig);
       
       // Verifica se o arquivo existe fazendo uma requisição HEAD
