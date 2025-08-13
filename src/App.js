@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
-import RealARScene from './components/RealARScene';
+import AdvancedARScene from './components/AdvancedARScene';
 
 function App() {
   return (
     <div className="App">
-      <RealARScene />
+      <AdvancedARScene />
     </div>
   );
 }

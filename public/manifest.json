@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "AR Trozoba",
+  "name": "AR Trozoba - Realidade Aumentada",
+  "description": "Experiência de Realidade Aumentada com integração de câmera, renderização 3D e sensores do dispositivo",
   "icons": [
     {
       "src": "./favicon.ico",
@@ -19,7 +20,39 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
+  "display": "fullscreen",
+  "orientation": "any",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#000000",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["entertainment", "education", "utilities"],
+  "permissions": [
+    "camera",
+    "gyroscope",
+    "accelerometer",
+    "magnetometer"
+  ],
+  "features": [
+    "camera",
+    "gyroscope",
+    "accelerometer",
+    "magnetometer",
+    "ar"
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Iniciar AR",
+      "short_name": "AR",
+      "description": "Iniciar experiência de realidade aumentada",
+      "url": "/",
+      "icons": [
+        {
+          "src": "./logo192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }
