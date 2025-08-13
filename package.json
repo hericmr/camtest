@@ -2,6 +2,7 @@
   "name": "ar-examples",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://hericmr.github.io/camtest",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.7.0",
