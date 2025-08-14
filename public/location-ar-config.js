@@ -15,7 +15,13 @@ window.LOCATION_AR_CONFIG = {
       maximumAge: 60000
     },
     // Precisão mínima em metros
-    minAccuracy: 10
+    minAccuracy: 10,
+    // Distância máxima para mostrar objetos em tamanho normal
+    maxDistanceForNormalScale: 1000, // 1km
+    // Distância máxima para mostrar objetos (depois disso, escala diminui)
+    maxDistanceForVisibility: 10000, // 10km
+    // Escala mínima para objetos muito distantes
+    minScale: 0.1
   },
   
   // Objetos AR para posicionar no mundo
@@ -197,6 +203,29 @@ window.LOCATION_AR_UTILS = {
     } else {
       return `${(meters / 1000).toFixed(1)}km`;
     }
+  },
+  
+  // Calcula escala baseada na distância
+  calculateScaleByDistance: (distance, baseScale = 1, maxDistance = 1000, minScale = 0.1) => {
+    if (distance <= maxDistance) {
+      return baseScale; // Escala normal para distâncias próximas
+    } else {
+      // Escala diminui linearmente com a distância
+      const scaleFactor = Math.max(minScale, maxDistance / distance);
+      return baseScale * scaleFactor;
+    }
+  },
+  
+  // Verifica se um objeto deve ser visível baseado na distância
+  shouldShowObject: (distance, maxDistance = 10000) => {
+    return distance <= maxDistance;
+  },
+  
+  // Obtém direção cardinal (N, S, L, O) para um objeto
+  getCardinalDirection: (bearing) => {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO', 'NO', 'NNO'];
+    const index = Math.round(bearing / 22.5) % 16;
+    return directions[index];
   }
 };
 

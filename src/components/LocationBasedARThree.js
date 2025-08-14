@@ -207,6 +207,30 @@ const LocationBasedARThree = () => {
     const objectsToCreate = config.objects || [];
     
     objectsToCreate.forEach(obj => {
+      // Calcula distância até o objeto
+      let distance = 0;
+      if (window.LOCATION_AR_UTILS?.calculateDistance) {
+        distance = window.LOCATION_AR_UTILS.calculateDistance(
+          location.latitude, location.longitude,
+          obj.position.latitude, obj.position.longitude
+        );
+      }
+      
+      // Verifica se o objeto deve ser visível
+      const maxDistance = window.LOCATION_AR_CONFIG?.location?.maxDistanceForVisibility || 10000;
+      if (window.LOCATION_AR_UTILS?.shouldShowObject && !window.LOCATION_AR_UTILS.shouldShowObject(distance, maxDistance)) {
+        console.log(`Objeto ${obj.name} muito distante (${window.LOCATION_AR_UTILS.formatDistance(distance)}), não será mostrado`);
+        return; // Pula este objeto
+      }
+      
+      // Calcula escala baseada na distância
+      let finalScale = obj.scale;
+      if (window.LOCATION_AR_UTILS?.calculateScaleByDistance) {
+        const maxNormalDistance = window.LOCATION_AR_CONFIG?.location?.maxDistanceForNormalScale || 1000;
+        const minScale = window.LOCATION_AR_CONFIG?.location?.minScale || 0.1;
+        finalScale = window.LOCATION_AR_UTILS.calculateScaleByDistance(distance, obj.scale, maxNormalDistance, minScale);
+      }
+      
       // Usa utilitários globais se disponíveis
       let position3D;
       if (window.LOCATION_AR_UTILS?.gpsTo3D) {
@@ -267,9 +291,9 @@ const LocationBasedARThree = () => {
         threeObject = new THREE.Mesh(geometry, material);
       }
       
-      // Aplica transformações
+      // Aplica transformações com escala ajustada
       threeObject.position.set(position3D.x, position3D.y, position3D.z);
-      threeObject.scale.setScalar(obj.scale);
+      threeObject.scale.setScalar(finalScale);
       threeObject.rotation.set(
         obj.rotation.x,
         obj.rotation.y,
@@ -281,7 +305,9 @@ const LocationBasedARThree = () => {
       objects.push({
         ...obj,
         threeObject,
-        position3D
+        position3D,
+        distance,
+        finalScale
       });
     });
 
@@ -588,6 +614,48 @@ const LocationBasedARThree = () => {
                 )
               )}
             </div>
+            {window.LOCATION_AR_UTILS?.getDirectionToObject && (
+              <div>
+                Direção: {window.LOCATION_AR_UTILS.getCardinalDirection(
+                  window.LOCATION_AR_UTILS.getDirectionToObject(
+                    userLocation.latitude, userLocation.longitude,
+                    nearestObject.position.latitude, nearestObject.position.longitude
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Informações de navegação para objetos distantes */}
+        {arObjects.length > 0 && (
+          <div style={{ marginBottom: '15px', fontSize: '12px' }}>
+            <div>🧭 Navegação:</div>
+            {arObjects.map(obj => {
+              if (obj.distance && window.LOCATION_AR_UTILS?.formatDistance) {
+                const distance = window.LOCATION_AR_UTILS.formatDistance(obj.distance);
+                const direction = window.LOCATION_AR_UTILS?.getDirectionToObject ? 
+                  window.LOCATION_AR_UTILS.getCardinalDirection(
+                    window.LOCATION_AR_UTILS.getDirectionToObject(
+                      userLocation.latitude, userLocation.longitude,
+                      obj.position.latitude, obj.position.longitude
+                    )
+                  ) : '';
+                
+                return (
+                  <div key={obj.id} style={{ marginTop: '5px' }}>
+                    <div>{obj.name}: {distance}</div>
+                    {direction && <div>Direção: {direction}</div>}
+                    {obj.finalScale !== obj.scale && (
+                      <div style={{ opacity: 0.7 }}>
+                        Escala: {obj.finalScale.toFixed(2)}x
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         )}
         
