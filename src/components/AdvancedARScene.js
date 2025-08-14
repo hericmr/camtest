@@ -49,6 +49,9 @@ const AdvancedARScene = () => {
       // Garante que as configurações de sensores existam
       sensors: {
         sensitivity: 0.5,
+        orbitRadius: 8,
+        orbitSmoothness: 0.05,
+        motionSensitivity: 0.5,
         ...globalConfig.sensors
       }
     };
@@ -309,8 +312,9 @@ const AdvancedARScene = () => {
       renderer.setClearColor(0x000000, 0);
       renderer.setPixelRatio(window.devicePixelRatio || 1);
 
-      // Posiciona a câmera
-      camera.position.z = 5;
+      // Posiciona a câmera para começar a orbitar ao redor do modelo
+      camera.position.set(0, 0, 8); // Posição inicial para órbita
+      camera.lookAt(0, 0, 0); // Olha para o centro onde estará o modelo
 
       // Adiciona iluminação baseada nas configurações globais
       const lightingConfig = window.AR_CONFIG?.lighting || {
@@ -474,11 +478,11 @@ const AdvancedARScene = () => {
       
       // Aplica configurações do modelo
       model.scale.setScalar(modelConfig.scale || AR_CONFIG.model.scale);
-      model.position.set(
-        modelConfig.position.x || AR_CONFIG.model.position.x,
-        modelConfig.position.y || AR_CONFIG.model.position.y,
-        modelConfig.position.z || AR_CONFIG.model.position.z
-      );
+      
+      // Posiciona o modelo no centro do ambiente para permitir órbita da câmera
+      model.position.set(0, 0, 0); // Centro absoluto
+      
+      // Rotação inicial do modelo (pode ser ajustada)
       model.rotation.set(
         modelConfig.rotation.x || AR_CONFIG.model.rotation.x,
         modelConfig.rotation.y || AR_CONFIG.model.rotation.y,
@@ -557,22 +561,47 @@ const AdvancedARScene = () => {
   const renderLoop = useCallback(() => {
     if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
 
-    // Atualiza posição da câmera baseada nos sensores
+    // Sistema de câmera orbital - modelo fica fixo, câmera se move ao redor
     if (sensorPermission === 'granted' && modelRef.current) {
       const orientation = deviceOrientationRef.current;
       const motion = deviceMotionRef.current;
       const sensitivity = window.AR_CONFIG?.sensors?.sensitivity || AR_CONFIG.sensorSensitivity;
 
-      // Aplica rotação baseada no giroscópio
-      if (modelRef.current) {
-        // Rotação baseada no device orientation
-        modelRef.current.rotation.y = THREE.MathUtils.degToRad(orientation.alpha) * sensitivity;
-        modelRef.current.rotation.x = THREE.MathUtils.degToRad(orientation.beta - 90) * sensitivity;
+      // O modelo fica FIXO no ambiente - não se move nem rotaciona
+      // modelRef.current permanece estático
+
+      // Calcula posição da câmera em órbita ao redor do modelo
+      if (cameraRef.current) {
+        // Configurações da órbita das configurações globais
+        const orbitRadius = window.AR_CONFIG?.sensors?.orbitRadius || AR_CONFIG.sensors?.orbitRadius || 8;
+        const orbitSmoothness = window.AR_CONFIG?.sensors?.orbitSmoothness || AR_CONFIG.sensors?.orbitSmoothness || 0.05;
+        const motionSensitivity = window.AR_CONFIG?.sensors?.motionSensitivity || AR_CONFIG.sensors?.motionSensitivity || 0.5;
         
-        // Movimento sutil baseado no acelerômetro
-        const motionOffset = 0.1;
-        modelRef.current.position.x += (motion.x * motionOffset - modelRef.current.position.x) * 0.1;
-        modelRef.current.position.y += (-motion.y * motionOffset - modelRef.current.position.y) * 0.1;
+        // Ângulos baseados nos sensores do dispositivo
+        const alpha = THREE.MathUtils.degToRad(orientation.alpha || 0);
+        const beta = THREE.MathUtils.degToRad(orientation.beta || 0);
+        const gamma = THREE.MathUtils.degToRad(orientation.gamma || 0);
+        
+        // Posição da câmera em coordenadas esféricas
+        const cameraX = orbitRadius * Math.sin(beta) * Math.cos(alpha);
+        const cameraY = orbitRadius * Math.cos(beta);
+        const cameraZ = orbitRadius * Math.sin(beta) * Math.sin(alpha);
+        
+        // Aplica movimento suave da câmera
+        cameraRef.current.position.lerp(
+          new THREE.Vector3(cameraX, cameraY, cameraZ),
+          orbitSmoothness
+        );
+        
+        // A câmera sempre olha para o modelo (que está na origem)
+        cameraRef.current.lookAt(0, 0, 0);
+        
+        // Adiciona movimento sutil baseado no acelerômetro para simular "respiração" da câmera
+        const subtleX = motion.x * motionSensitivity * sensitivity;
+        const subtleY = motion.y * motionSensitivity * sensitivity;
+        
+        cameraRef.current.position.x += subtleX * 0.01;
+        cameraRef.current.position.y += subtleY * 0.01;
       }
     }
 

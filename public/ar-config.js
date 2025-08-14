@@ -25,7 +25,11 @@ window.AR_CONFIG = {
     enableGyroscope: true,
     enableAccelerometer: true,
     enableMagnetometer: true,
-    updateRate: 60 // Hz
+    updateRate: 60, // Hz
+    // Configurações para órbita da câmera
+    orbitRadius: 8, // Distância da câmera ao modelo
+    orbitSmoothness: 0.05, // Suavização do movimento (0.01 = muito suave, 0.1 = mais responsivo)
+    motionSensitivity: 0.5 // Sensibilidade do movimento sutil
   },
   
   // Configurações de renderização
