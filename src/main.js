@@ -41,6 +41,7 @@ const cam = new LocAR.Webcam({
 });
 
 let firstLocation = true; // Flag para executar apenas uma vez
+let trozobaModel = null; // Variável para armazenar o modelo trozoba.glb
 
 const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 
@@ -116,8 +117,9 @@ locar.on("gpsupdate", (pos, distMoved) => {
                 });
 
                 // Posicionar o modelo a oeste da posição atual (substituindo o cubo ciano)
+                trozobaModel = model; // Armazena o modelo na variável global
                 locar.add(
-                    model,
+                    trozobaModel,
                     pos.coords.longitude - 0.0005, // ~55m a oeste
                     pos.coords.latitude
                 );
@@ -139,6 +141,9 @@ renderer.setAnimationLoop(animate);
 
 function animate() {
     deviceOrientationControls.update();
+    if (trozobaModel) {
+        trozobaModel.rotation.y += 0.01; // Ajuste a velocidade de rotação conforme necessário
+    }
     renderer.render(scene, camera);
 }
 
