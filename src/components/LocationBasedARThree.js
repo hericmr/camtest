@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 
 const LocationBasedARThree = () => {
-  const containerRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
@@ -308,7 +307,7 @@ const LocationBasedARThree = () => {
   };
 
   // Inicializa o AR baseado em localização
-  const initializeLocationAR = async () => {
+  const initializeLocationAR = useCallback(async () => {
     try {
       setIsLoading(true);
       setError('');
@@ -341,7 +340,7 @@ const LocationBasedARThree = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Loop de renderização
   const renderLoop = () => {
@@ -384,7 +383,7 @@ const LocationBasedARThree = () => {
         rendererRef.current.dispose();
       }
     };
-  }, []);
+  }, [initializeLocationAR]);
 
   // Handler para redimensionamento
   useEffect(() => {

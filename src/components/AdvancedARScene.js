@@ -580,7 +580,6 @@ const AdvancedARScene = () => {
         // Ângulos baseados nos sensores do dispositivo
         const alpha = THREE.MathUtils.degToRad(orientation.alpha || 0);
         const beta = THREE.MathUtils.degToRad(orientation.beta || 0);
-        const gamma = THREE.MathUtils.degToRad(orientation.gamma || 0);
         
         // Posição da câmera em coordenadas esféricas
         const cameraX = orbitRadius * Math.sin(beta) * Math.cos(alpha);
@@ -608,7 +607,7 @@ const AdvancedARScene = () => {
     // Renderiza a cena
     rendererRef.current.render(sceneRef.current, cameraRef.current);
     requestAnimationFrame(renderLoop);
-  }, [sensorPermission, AR_CONFIG.sensorSensitivity]);
+  }, [sensorPermission, AR_CONFIG.sensorSensitivity, window.AR_CONFIG?.sensors?.orbitRadius, window.AR_CONFIG?.sensors?.orbitSmoothness, window.AR_CONFIG?.sensors?.motionSensitivity]);
 
   // Inicialização completa
   useEffect(() => {
