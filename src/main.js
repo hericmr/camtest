@@ -47,8 +47,60 @@ const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 // ✨ Listener para atualizações de GPS
 locar.on("gpsupdate", (pos, distMoved) => {
     if (firstLocation) {
-        const loader = new GLTFLoader();
+        // Configuração dos cubos direcionais
+        const boxProperties = [
+            {
+                latDis: 0.0005,    // ~55m Norte
+                lonDis: 0,
+                colour: 0xff0000,  // Vermelho
+                direction: 'Norte'
+            },
+            {
+                latDis: -0.0005,   // ~55m Sul  
+                lonDis: 0,
+                colour: 0xffff00,  // Amarelo
+                direction: 'Sul'
+            },
+            {
+                latDis: 0,
+                lonDis: -0.0005,   // ~55m Oeste
+                colour: 0x00ffff,  // Ciano
+                direction: 'Oeste'
+            },
+            {
+                latDis: 0,
+                lonDis: 0.0005,    // ~55m Leste
+                colour: 0x00ff00,  // Verde
+                direction: 'Leste'
+            }
+        ];
 
+        const geometry = new THREE.BoxGeometry(10, 10, 10);
+
+        // Criar e posicionar os cubos (exceto o oeste que será substituído pelo modelo 3D)
+        boxProperties.forEach(prop => {
+            // Pular o cubo oeste (será substituído pelo trozoba.glb)
+            if (prop.direction === 'Oeste') return;
+            
+            const mesh = new THREE.Mesh(
+                geometry, 
+                new THREE.MeshBasicMaterial({ color: prop.colour })
+            );
+        
+            locar.add(
+                mesh, 
+                pos.coords.longitude + prop.lonDis, 
+                pos.coords.latitude + prop.latDis
+            );
+            
+            console.log(`Cubo ${prop.direction} adicionado:`, {
+                lat: pos.coords.latitude + prop.latDis,
+                lon: pos.coords.longitude + prop.lonDis
+            });
+        });
+
+        // ✨ Carregar o modelo trozoba.glb na posição Oeste (substituindo o cubo ciano)
+        const loader = new GLTFLoader();
         loader.load(
             `${import.meta.env.BASE_URL}trozoba.glb`,
             function (gltf) {
@@ -63,19 +115,20 @@ locar.on("gpsupdate", (pos, distMoved) => {
                     }
                 });
 
+                // Posicionar o modelo a oeste da posição atual (substituindo o cubo ciano)
                 locar.add(
                     model,
-                    -46.31666311120769, // Longitude
-                    -23.978698200975693 // Latitude
+                    pos.coords.longitude - 0.0005, // ~55m a oeste
+                    pos.coords.latitude
                 );
-                console.log('Modelo trozoba.glb adicionado ao sul, muito maior e mais próximo.');
+                console.log('Modelo trozoba.glb substitui o cubo oeste na posição atual.');
             },
             undefined,
             function (error) {
-                console.error(error);
+                console.error('Erro ao carregar trozoba.glb:', error);
             }
         );
-
+        
         firstLocation = false;
     }
 });
