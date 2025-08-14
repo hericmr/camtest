@@ -306,6 +306,25 @@ const LocationBasedARThree = () => {
     return objects;
   };
 
+  // Loop de renderização
+  const renderLoop = () => {
+    if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
+
+    // Atualiza posições dos objetos baseado na localização
+    if (userLocation && arObjects.length > 0) {
+      arObjects.forEach(obj => {
+        if (obj.threeObject) {
+          // Simula movimento sutil dos objetos
+          obj.threeObject.rotation.y += 0.01;
+        }
+      });
+    }
+
+    // Renderiza a cena
+    rendererRef.current.render(sceneRef.current, cameraRef.current);
+    requestAnimationFrame(renderLoop);
+  };
+
   // Inicializa o AR baseado em localização
   const initializeLocationAR = useCallback(async () => {
     try {
@@ -341,25 +360,6 @@ const LocationBasedARThree = () => {
       setIsLoading(false);
     }
   }, []);
-
-  // Loop de renderização
-  const renderLoop = () => {
-    if (!sceneRef.current || !cameraRef.current || !rendererRef.current) return;
-
-    // Atualiza posições dos objetos baseado na localização
-    if (userLocation && arObjects.length > 0) {
-      arObjects.forEach(obj => {
-        if (obj.threeObject) {
-          // Simula movimento sutil dos objetos
-          obj.threeObject.rotation.y += 0.01;
-        }
-      });
-    }
-
-    // Renderiza a cena
-    rendererRef.current.render(sceneRef.current, cameraRef.current);
-    requestAnimationFrame(renderLoop);
-  };
 
   // Inicialização
   useEffect(() => {
