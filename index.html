@@ -1,65 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR.js - Hello World</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background: #000;
-        }
-        canvas {
-            display: block;
-        }
-        #info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1000;
-        }
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1000;
-        }
-    </style>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+<title>LocAR.js example 2</title>
+<link rel='stylesheet' type='text/css' href='../css/style.css' />
+<script type='module' src='src/main.js'></script>
 </head>
 <body>
-    <div id="info">
-        <h3>🎯 AR.js - Hello World</h3>
-        <div>📍 Localização: <span id="user-location">-23.978824, -46.316374</span></div>
-        <div>🎲 Objeto: Caixa vermelha a 10m ao norte</div>
-        <div>📱 Use em dispositivo móvel com GPS</div>
-    </div>
-    
-    <div id="controls">
-        <div>🖱️ Desktop: Clique e arraste para rotacionar</div>
-        <div>📱 Mobile: Gire o dispositivo para navegar</div>
-    </div>
+<main>
 
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
-    <!-- AR.js -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
-    <!-- Script principal -->
-    <script type='module' src='src/main.js'></script>
+<div id="gpsinput">
+<div><input id="fakeLat" placeholder="Fake Lat" /></div>
+<div><input id="fakeLon" placeholder="Fake Lon"/></div>
+<div><button id="setFakeLoc">Set Fake Location!</button></div>
+</div>
+
+<canvas id="glscene"></canvas>
+
+</main>
 </body>
 </html>

@@ -10,6 +10,9 @@
     "deploy": "./deploy.sh",
     "deploy:gh-pages": "npm run build && gh-pages -d dist"
   },
+  "dependencies": {
+    "three": "^0.158.0"
+  },
   "devDependencies": {
     "gh-pages": "^6.3.0",
     "vite": "^5.0.0"
