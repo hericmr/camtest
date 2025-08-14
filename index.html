@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AR.js - Hello World</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h3>🎯 AR.js - Hello World</h3>
+        <div>📍 Localização: -23.978824, -46.316374</div>
+        <div>🎲 Objeto: Caixa vermelha a 10m ao norte</div>
+        <div>📱 Use em dispositivo móvel com GPS</div>
+    </div>
+    
+    <div id="controls">
+        <div>🖱️ Desktop: Clique e arraste para rotacionar</div>
+        <div>📱 Mobile: Gire o dispositivo para navegar</div>
+    </div>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    
+    <!-- AR.js -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <!-- Script principal -->
+    <script type='module' src='src/main.js'></script>
+</body>
+</html>
