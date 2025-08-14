@@ -50,7 +50,7 @@ locar.on("gpsupdate", (pos, distMoved) => {
         const loader = new GLTFLoader();
 
         loader.load(
-            `${import.meta.env.BASE_URL}trozoba.glb`,
+            `/trozoba.glb`,
             function (gltf) {
                 const model = gltf.scene;
                 model.scale.set(80, 80, 80); // Aumentado significativamente o tamanho
