@@ -116,8 +116,9 @@ const RealARScene = () => {
     const loader = new GLTFLoader();
     
     // Carrega o modelo trozoba.glb
+    const modelPath = window.AR_UTILS?.getModelPath ? window.AR_UTILS.getModelPath('model-trozoba.glb') : 'model-trozoba.glb';
     loader.load(
-      `${process.env.PUBLIC_URL}/trozoba.glb`,
+      modelPath,
       (gltf) => {
         const model = gltf.scene;
         

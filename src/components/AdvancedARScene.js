@@ -23,12 +23,34 @@ const AdvancedARScene = () => {
   const lastUpdateTimeRef = useRef(0);
 
   // Configurações do modelo AR (usa configurações globais se disponíveis)
-  const AR_CONFIG = useMemo(() => window.AR_CONFIG || {
-    modelScale: 2.5,
-    modelPosition: { x: 0, y: -1, z: -3 },
-    modelRotation: { x: 0, y: 0, z: 0 },
-    sensorSensitivity: 0.5,
-    autoLoad: true
+  const AR_CONFIG = useMemo(() => {
+    const globalConfig = window.AR_CONFIG || {};
+    return {
+      // Propriedades de compatibilidade (mantidas para compatibilidade com código existente)
+      modelScale: 2.5,
+      modelPosition: { x: 0, y: -1, z: -3 },
+      modelRotation: { x: 0, y: 0, z: 0 },
+      sensorSensitivity: 0.5,
+      autoLoad: true,
+      
+      // Mescla com configurações globais
+      ...globalConfig,
+      
+      // Garante que as propriedades do modelo existam
+      model: {
+        scale: 2.5,
+        position: { x: 0, y: -1, z: -3 },
+        rotation: { x: 0, y: 0, z: 0 },
+        autoLoad: true,
+        ...globalConfig.model
+      },
+      
+      // Garante que as configurações de sensores existam
+      sensors: {
+        sensitivity: 0.5,
+        ...globalConfig.sensors
+      }
+    };
   }, []);
 
   // Inicialização automática da câmera
@@ -329,34 +351,84 @@ const AdvancedARScene = () => {
   const loadModel = useCallback(async () => {
     if (!sceneRef.current) return false;
 
+    // Declara variáveis no escopo da função para que sejam acessíveis no catch
+    let modelConfig = window.AR_CONFIG?.model || AR_CONFIG;
+    let modelFile = modelConfig.file || (window.AR_UTILS?.getModelPath ? window.AR_UTILS.getModelPath('model-trozoba.glb') : 'model-trozoba.glb');
+    let finalModelFile = modelFile; // Variável para armazenar o caminho final
+
     try {
       setIsLoading(true);
       
       const loader = new GLTFLoader();
       
-      // Usa PUBLIC_URL para garantir o caminho correto em desenvolvimento e produção
-      const modelConfig = window.AR_CONFIG?.model || AR_CONFIG;
-      const modelFile = modelConfig.file || `${process.env.PUBLIC_URL}/trozoba.glb`;
-      
       console.log('Tentando carregar modelo de:', modelFile);
       console.log('PUBLIC_URL:', process.env.PUBLIC_URL);
       console.log('Configuração do modelo:', modelConfig);
+      console.log('URL atual:', window.location.href);
+      console.log('Base URL:', window.location.origin + window.location.pathname);
+      console.log('AR_CONFIG disponível:', !!window.AR_CONFIG);
+      console.log('AR_UTILS disponível:', !!window.AR_UTILS);
+      if (window.AR_UTILS) {
+        console.log('getModelPath disponível:', !!window.AR_UTILS.getModelPath);
+        console.log('testModelAccessibility disponível:', !!window.AR_UTILS.testModelAccessibility);
+      }
       
       // Verifica se o arquivo existe fazendo uma requisição HEAD
       try {
+        console.log('🔍 Verificando arquivo:', modelFile);
         const response = await fetch(modelFile, { method: 'HEAD' });
         if (!response.ok) {
           throw new Error(`Arquivo não encontrado: ${response.status} ${response.statusText}`);
         }
-        console.log('Arquivo encontrado, tamanho:', response.headers.get('content-length'), 'bytes');
+        console.log('✅ Arquivo encontrado, tamanho:', response.headers.get('content-length'), 'bytes');
+        console.log('📍 URL completa:', response.url);
       } catch (fetchErr) {
-        console.warn('Erro ao verificar arquivo:', fetchErr);
-        // Continua mesmo com erro na verificação
+        console.warn('⚠️ Erro ao verificar arquivo:', fetchErr);
+        console.log('💡 Tentando caminhos alternativos...');
+        
+        // Se temos a função de teste de acessibilidade, usa ela
+        if (window.AR_UTILS?.testModelAccessibility) {
+          console.log('🧪 Usando função de teste de acessibilidade...');
+          const workingPath = await window.AR_UTILS.testModelAccessibility('model-trozoba.glb');
+          if (workingPath) {
+            console.log('✅ Caminho alternativo encontrado:', workingPath);
+            finalModelFile = workingPath;
+            modelConfig.file = workingPath;
+          }
+        } else {
+          // Fallback para caminhos alternativos básicos
+          const alternativePaths = [
+            `./${modelFile}`,
+            `/${modelFile}`,
+            `${window.location.origin}${window.location.pathname}${modelFile}`,
+            `${window.location.origin}${modelFile}`
+          ];
+          
+          for (const altPath of alternativePaths) {
+            try {
+              console.log('🔄 Tentando caminho alternativo:', altPath);
+              const altResponse = await fetch(altPath, { method: 'HEAD' });
+              if (altResponse.ok) {
+                console.log('✅ Caminho alternativo funcionou:', altPath);
+                // Atualiza o caminho do modelo
+                finalModelFile = altPath;
+                modelConfig.file = altPath;
+                break;
+              }
+            } catch (altErr) {
+              console.log('❌ Caminho alternativo falhou:', altPath, altErr.message);
+            }
+          }
+        }
       }
+      
+      // Usa o caminho atualizado se foi encontrado um caminho alternativo
+      finalModelFile = modelConfig.file || modelFile;
+      console.log('🎯 Caminho final do modelo:', finalModelFile);
       
       const gltf = await new Promise((resolve, reject) => {
         loader.load(
-          modelFile,
+          finalModelFile,
           (gltf) => {
             console.log('Modelo carregado com sucesso:', gltf);
             resolve(gltf);
@@ -378,16 +450,16 @@ const AdvancedARScene = () => {
       const model = gltf.scene;
       
       // Aplica configurações do modelo
-      model.scale.setScalar(modelConfig.scale || AR_CONFIG.modelScale);
+      model.scale.setScalar(modelConfig.scale || AR_CONFIG.model.scale);
       model.position.set(
-        modelConfig.position.x || AR_CONFIG.modelPosition.x,
-        modelConfig.position.y || AR_CONFIG.modelPosition.y,
-        modelConfig.position.z || AR_CONFIG.modelPosition.z
+        modelConfig.position.x || AR_CONFIG.model.position.x,
+        modelConfig.position.y || AR_CONFIG.model.position.y,
+        modelConfig.position.z || AR_CONFIG.model.position.z
       );
       model.rotation.set(
-        modelConfig.rotation.x || AR_CONFIG.modelRotation.x,
-        modelConfig.rotation.y || AR_CONFIG.modelRotation.y,
-        modelConfig.rotation.z || AR_CONFIG.modelRotation.z
+        modelConfig.rotation.x || AR_CONFIG.model.rotation.x,
+        modelConfig.rotation.y || AR_CONFIG.model.rotation.y,
+        modelConfig.rotation.z || AR_CONFIG.model.rotation.z
       );
 
       // Adiciona o modelo à cena
@@ -405,13 +477,24 @@ const AdvancedARScene = () => {
       if (err.message.includes('JSON.parse')) {
         errorMessage = 'Erro no formato do arquivo GLB. Verifique se o arquivo está correto.';
       } else if (err.message.includes('404') || err.message.includes('Not Found')) {
-        errorMessage = 'Arquivo do modelo não encontrado. Verifique se trozoba.glb está na pasta public.';
+        errorMessage = `Arquivo do modelo não encontrado (404). Tentou carregar de: ${finalModelFile}`;
       } else if (err.message.includes('fetch')) {
-        errorMessage = 'Erro ao baixar o arquivo do modelo. Verifique a conexão.';
+        errorMessage = `Erro ao baixar o arquivo do modelo. Tentou carregar de: ${finalModelFile}`;
       } else if (err.message.includes('Arquivo não encontrado')) {
-        errorMessage = `Arquivo não encontrado: ${err.message}`;
+        errorMessage = `Arquivo não encontrado: ${err.message}. Tentou carregar de: ${finalModelFile}`;
       } else {
-        errorMessage = `Erro ao carregar modelo 3D: ${err.message}`;
+        errorMessage = `Erro ao carregar modelo 3D: ${err.message}. Tentou carregar de: ${finalModelFile}`;
+      }
+      
+      // Adiciona informações de debug adicionais
+      console.log('🔍 Debug do erro:');
+      console.log('  - Modelo tentado:', finalModelFile);
+      console.log('  - Configuração atual:', modelConfig);
+      console.log('  - AR_CONFIG disponível:', !!window.AR_CONFIG);
+      console.log('  - AR_UTILS disponível:', !!window.AR_UTILS);
+      if (window.AR_UTILS) {
+        console.log('  - getModelPath:', window.AR_UTILS.getModelPath('trozoba.glb'));
+        console.log('  - getBasePath:', window.AR_UTILS.getBasePath());
       }
       
       setError(errorMessage);
