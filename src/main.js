@@ -65,7 +65,7 @@ locar.on("gpsupdate", (pos, distMoved) => {
                 locar.add(
                     model,
                     pos.coords.longitude,
-                    pos.coords.latitude - 0.0005 // Moved to South
+                    pos.coords.latitude - 0.005 // Moved to South
                 );
                 console.log('Modelo trozoba.glb adicionado ao sul, maior e preto.');
             },
