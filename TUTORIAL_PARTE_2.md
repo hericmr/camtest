@@ -208,8 +208,8 @@ A orientação absoluta (relativa ao norte magnético) é complexa e requer APIs
 ```javascript
 // Para teste, use coordenadas próximas à sua localização
 // Exemplo: 0.001 graus ≈ 111 metros
-const myLongitude = -46.6333; // São Paulo (exemplo)
-const myLatitude = -23.5505;
+const myLongitude = -46.31643366140271; // Santos (exemplo)
+const myLatitude = -23.97879148434899;
 
 locar.add(cube, myLongitude + 0.001, myLatitude); // ~111m a leste
 ```
