@@ -31,6 +31,11 @@ npm run deploy
 ./deploy.sh
 ```
 
+### **2. Deploy no GitHub Pages**
+```bash
+npm run deploy:gh-pages
+```
+
 ### **2. Deploy Manual**
 ```bash
 # Instalar dependências
@@ -67,6 +72,11 @@ dist/
 - **Pasta**: `dist/`
 - **Servidor**: Qualquer servidor web estático
 
+### **GitHub Pages**
+- **URL**: `https://[seu-usuario].github.io/[seu-repositorio]`
+- **Comando**: `npm run deploy:gh-pages`
+- **Branch**: `gh-pages` (criado automaticamente)
+
 ## 📱 **Funcionalidades**
 
 - **📍 Localização fake**: Usuário posicionado em São Paulo
@@ -91,6 +101,9 @@ npm run preview
 npm run deploy
 # ou
 ./deploy.sh
+
+# Deploy no GitHub Pages
+npm run deploy:gh-pages
 ```
 
 ## 🔍 **Verificação do Deploy**
@@ -135,6 +148,26 @@ Após o deploy bem-sucedido, você pode:
 - **Adicionar** interatividade e animações
 - **Expandir** para múltiplos objetos
 - **Integrar** com APIs de localização real
+
+## 🌐 **Configuração do GitHub Pages**
+
+### **1. Primeira Configuração**
+```bash
+# Execute o deploy no GitHub Pages
+npm run deploy:gh-pages
+```
+
+### **2. Configuração no GitHub**
+1. Vá para **Settings** do seu repositório
+2. Role até **Pages**
+3. Em **Source**, selecione **Deploy from a branch**
+4. Selecione a branch **gh-pages**
+5. Clique **Save**
+
+### **3. URLs de Acesso**
+- **Repositório**: `https://github.com/[usuario]/[repositorio]`
+- **GitHub Pages**: `https://[usuario].github.io/[repositorio]`
+- **Branch gh-pages**: Criada automaticamente pelo gh-pages
 
 ## 📞 **Suporte**
 
