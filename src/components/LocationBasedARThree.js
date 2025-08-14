@@ -16,6 +16,8 @@ const LocationBasedARThree = () => {
   const [cameraPermission, setCameraPermission] = useState('prompt');
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
   const [nearestObject, setNearestObject] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(true);
 
   // Configurações de localização (usa configurações globais se disponíveis)
   const config = useMemo(() => {
@@ -82,6 +84,7 @@ const LocationBasedARThree = () => {
       setUserLocation({ latitude, longitude });
       setGpsAccuracy(accuracy);
       
+      addLog(`📍 GPS obtido: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (precisão: ${accuracy.toFixed(1)}m)`, 'success');
       console.log('Localização obtida:', { latitude, longitude, accuracy });
       return { latitude, longitude, accuracy };
     } catch (err) {
@@ -219,7 +222,9 @@ const LocationBasedARThree = () => {
       // Verifica se o objeto deve ser visível
       const maxDistance = window.LOCATION_AR_CONFIG?.location?.maxDistanceForVisibility || 10000;
       if (window.LOCATION_AR_UTILS?.shouldShowObject && !window.LOCATION_AR_UTILS.shouldShowObject(distance, maxDistance)) {
-        console.log(`Objeto ${obj.name} muito distante (${window.LOCATION_AR_UTILS.formatDistance(distance)}), não será mostrado`);
+        const distanceFormatted = window.LOCATION_AR_UTILS.formatDistance(distance);
+        addLog(`🚫 ${obj.name} muito distante (${distanceFormatted}), ocultado`, 'warning');
+        console.log(`Objeto ${obj.name} muito distante (${distanceFormatted}), não será mostrado`);
         return; // Pula este objeto
       }
       
@@ -309,6 +314,16 @@ const LocationBasedARThree = () => {
         distance,
         finalScale
       });
+      
+      // Log de criação do objeto
+      const distanceFormatted = window.LOCATION_AR_UTILS?.formatDistance ? 
+        window.LOCATION_AR_UTILS.formatDistance(distance) : `${distance.toFixed(0)}m`;
+      
+      if (finalScale !== obj.scale) {
+        addLog(`🎯 ${obj.name} criado: ${distanceFormatted} (escala: ${finalScale.toFixed(2)}x)`, 'info');
+      } else {
+        addLog(`🎯 ${obj.name} criado: ${distanceFormatted}`, 'success');
+      }
     });
 
     setArObjects(objects);
@@ -356,30 +371,41 @@ const LocationBasedARThree = () => {
     try {
       setIsLoading(true);
       setError('');
+      addLog('🚀 Iniciando AR por localização...', 'info');
 
       // Obtém localização do usuário
       const location = await requestLocationPermission();
       
       // Inicializa Three.js
+      addLog('🎨 Inicializando renderização 3D...', 'info');
       const threeOk = initializeThreeJS();
       if (!threeOk) {
         throw new Error('Falha ao inicializar renderização 3D');
       }
+      addLog('✅ Renderização 3D inicializada', 'success');
 
       // Tenta inicializar a câmera (opcional)
       try {
+        addLog('📹 Inicializando câmera...', 'info');
         await initializeCamera();
+        addLog('✅ Câmera inicializada', 'success');
       } catch (cameraErr) {
+        addLog('⚠️ Câmera não disponível, continuando sem câmera', 'warning');
         console.warn('Câmera não disponível, continuando sem câmera:', cameraErr);
       }
 
       // Cria objetos AR
+      addLog('🎯 Criando objetos AR...', 'info');
       createARObjects(location);
       
       // Inicia o loop de renderização
+      addLog('🔄 Iniciando loop de renderização...', 'info');
       renderLoop();
       
+      addLog('🎉 AR por localização inicializado com sucesso!', 'success');
+      
     } catch (err) {
+      addLog(`❌ Erro na inicialização: ${err.message}`, 'error');
       console.error('Erro ao inicializar AR:', err);
       setError(`Erro ao inicializar AR: ${err.message}`);
     } finally {
@@ -478,11 +504,36 @@ const LocationBasedARThree = () => {
     };
 
     setArObjects(prev => [...prev, updatedObject]);
+    
+    // Log do novo objeto criado
+    const distanceFormatted = window.LOCATION_AR_UTILS?.formatDistance ? 
+      window.LOCATION_AR_UTILS.formatDistance(updatedObject.distance) : `${updatedObject.distance.toFixed(0)}m`;
+    addLog(`➕ Novo objeto criado: ${distanceFormatted}`, 'success');
+  };
+
+  // Função para adicionar logs visíveis
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = {
+      id: Date.now(),
+      message,
+      type,
+      timestamp
+    };
+    
+    setLogs(prev => {
+      const newLogs = [logEntry, ...prev.slice(0, 9)]; // Mantém apenas os últimos 10 logs
+      return newLogs;
+    });
+    
+    // Também loga no console para debug
+    console.log(`[${timestamp}] ${message}`);
   };
 
   // Função para recalibrar localização
   const recalibrateLocation = async () => {
     setIsLoading(true);
+    addLog('🔄 Recalibrando localização GPS...', 'info');
     await initializeLocationAR();
   };
 
@@ -699,6 +750,24 @@ const LocationBasedARThree = () => {
         <p style={{ margin: '15px 0 0 0', fontSize: '12px', opacity: 0.8 }}>
           📱 Use em dispositivo móvel com GPS ativo
         </p>
+        
+        {/* Botão para mostrar/ocultar logs */}
+        <button 
+          onClick={() => setShowLogs(!showLogs)}
+          style={{
+            background: showLogs ? '#dc3545' : '#28a745',
+            color: 'white',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            marginTop: '10px',
+            width: '100%'
+          }}
+        >
+          {showLogs ? '📋 Ocultar Logs' : '📋 Mostrar Logs'}
+        </button>
       </div>
 
       {/* Instruções */}
@@ -729,6 +798,96 @@ const LocationBasedARThree = () => {
           <li>Use "Recalibrar GPS" se necessário</li>
         </ul>
       </div>
+
+      {/* Logs visíveis na tela */}
+      {showLogs && logs.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          right: '20px',
+          transform: 'translateY(-50%)',
+          zIndex: 1000,
+          background: 'rgba(0,0,0,0.9)',
+          color: 'white',
+          padding: '15px',
+          borderRadius: '8px',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          maxWidth: '300px',
+          maxHeight: '60vh',
+          overflowY: 'auto'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '10px',
+            borderBottom: '1px solid #444',
+            paddingBottom: '5px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '14px' }}>📋 Logs em Tempo Real</h4>
+            <button 
+              onClick={() => setLogs([])}
+              style={{
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                fontSize: '10px'
+              }}
+            >
+              🗑️ Limpar
+            </button>
+          </div>
+          
+          <div style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+            {logs.map(log => (
+              <div 
+                key={log.id}
+                style={{
+                  marginBottom: '8px',
+                  padding: '5px',
+                  borderRadius: '3px',
+                  background: log.type === 'error' ? 'rgba(220, 53, 69, 0.3)' :
+                             log.type === 'warning' ? 'rgba(255, 193, 7, 0.3)' :
+                             log.type === 'success' ? 'rgba(40, 167, 69, 0.3)' :
+                             'rgba(0, 123, 255, 0.3)',
+                  borderLeft: `3px solid ${
+                    log.type === 'error' ? '#dc3545' :
+                    log.type === 'warning' ? '#ffc107' :
+                    log.type === 'success' ? '#28a745' :
+                    '#007bff'
+                  }`
+                }}
+              >
+                <div style={{ 
+                  fontSize: '10px', 
+                  opacity: 0.7, 
+                  marginBottom: '2px' 
+                }}>
+                  {log.timestamp}
+                </div>
+                <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
+                  {log.message}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div style={{ 
+            fontSize: '10px', 
+            opacity: 0.6, 
+            textAlign: 'center',
+            marginTop: '10px',
+            paddingTop: '5px',
+            borderTop: '1px solid #444'
+          }}>
+            {logs.length} logs • Última atualização: {logs[0]?.timestamp}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
