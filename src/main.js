@@ -53,8 +53,8 @@ locar.on("gpsupdate", (pos, distMoved) => {
             `${import.meta.env.BASE_URL}trozoba.glb`,
             function (gltf) {
                 const model = gltf.scene;
-                model.scale.set(30, 30, 30); // Increased size
-                model.position.set(-20, -5, -30); // Adjust position: -X (left), -Z (forward)
+                model.scale.set(80, 80, 80); // Aumentado significativamente o tamanho
+                model.position.set(-10, -2, -15); // Posicionado mais próximo e centralizado
 
                 // Apply black color
                 model.traverse((node) => {
@@ -68,7 +68,7 @@ locar.on("gpsupdate", (pos, distMoved) => {
                     -46.31666311120769, // Longitude
                     -23.978698200975693 // Latitude
                 );
-                console.log('Modelo trozoba.glb adicionado ao sul, maior e preto.');
+                console.log('Modelo trozoba.glb adicionado ao sul, muito maior e mais próximo.');
             },
             undefined,
             function (error) {
