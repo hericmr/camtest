@@ -87,3 +87,38 @@ function animate() {
     deviceOrientationControls.update();
     renderer.render(scene, camera);
 }
+
+// Audio playback logic
+const backgroundAudio = document.getElementById('background-audio');
+if (backgroundAudio) {
+    backgroundAudio.src = `${import.meta.env.BASE_URL}trozoba.mp3`;
+}
+
+function tryPlayAudio() {
+    if (backgroundAudio) {
+        backgroundAudio.play()
+            .then(() => {
+                console.log('Audio playing automatically.');
+            })
+            .catch(error => {
+                console.warn('Autoplay prevented:', error);
+                // Show a message or button to the user to play audio
+                document.addEventListener('click', userPlayAudio, { once: true });
+                document.addEventListener('touchstart', userPlayAudio, { once: true });
+            });
+    }
+}
+
+function userPlayAudio() {
+    if (backgroundAudio) {
+        backgroundAudio.play()
+            .then(() => {
+                console.log('Audio playing after user interaction.');
+            })
+            .catch(error => {
+                console.error('Error playing audio after user interaction:', error);
+            });
+    }
+}
+
+tryPlayAudio();
