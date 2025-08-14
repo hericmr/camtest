@@ -58,8 +58,19 @@ class LocationBasedAR {
             });
     }
 
-    fakeGps(lon, lat) {
+    setUserLocation(lon, lat) {
         this.userLocation = { lon, lat };
+        console.log(`📍 Localização do usuário definida: ${lat}, ${lon}`);
+        
+        // Reposiciona todos os objetos quando a localização do usuário muda
+        this.objects.forEach(({ object, lat: objLat, lon: objLon }) => {
+            const newPosition = this.gpsTo3D(objLat, objLon);
+            object.position.copy(newPosition);
+        });
+    }
+
+    fakeGps(lon, lat) {
+        this.setUserLocation(lon, lat);
         console.log(`📍 Localização fake definida: ${lat}, ${lon}`);
     }
 
@@ -103,12 +114,44 @@ const ar = new LocationBasedAR(scene, camera);
 const box = new THREE.BoxGeometry(2, 2, 2);
 const cube = new THREE.Mesh(box, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
 
-// Coordenadas padrão (São Paulo, Brasil)
-const defaultLat = -23.97882477971589;
-const defaultLon = -46.31637363516056;
+// Localização real do usuário (São Paulo, Brasil)
+const realLat = -23.978800026764073;
+const realLon = -46.31642355814511;
 
-// Posiciona o usuário em uma localização fake
-ar.fakeGps(defaultLon, defaultLat);
+// Função para obter localização real do usuário
+function getUserRealLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userLat = position.coords.latitude;
+                const userLon = position.coords.longitude;
+                
+                // Atualiza a localização do usuário
+                ar.setUserLocation(userLon, userLat);
+                
+                // Atualiza os inputs com a localização real
+                fakeLatInput.value = userLat.toFixed(12);
+                fakeLonInput.value = userLon.toFixed(12);
+                
+                console.log(`📍 Localização real obtida: ${userLat}, ${userLon}`);
+            },
+            (error) => {
+                console.warn('⚠️ Erro ao obter localização real:', error);
+                // Usa localização padrão se não conseguir obter a real
+                ar.setUserLocation(realLon, realLat);
+                fakeLatInput.value = realLat;
+                fakeLonInput.value = realLon;
+                console.log(`📍 Usando localização padrão: ${realLat}, ${realLon}`);
+            }
+        );
+    } else {
+        console.warn('⚠️ Geolocalização não suportada');
+        // Usa localização padrão
+        ar.setUserLocation(realLon, realLat);
+        fakeLatInput.value = realLat;
+        fakeLonInput.value = realLon;
+    }
+}
 
 // Adiciona a caixa a uma localização específica (30m de distância)
 ar.add(cube, -23.978687342536734, -46.31664859550511);
@@ -118,9 +161,8 @@ const fakeLatInput = document.getElementById('fakeLat');
 const fakeLonInput = document.getElementById('fakeLon');
 const setFakeLocButton = document.getElementById('setFakeLoc');
 
-// Preenche os inputs com as coordenadas padrão
-fakeLatInput.value = defaultLat;
-fakeLonInput.value = defaultLon;
+// Obtém a localização real do usuário
+getUserRealLocation();
 
 // Evento para definir nova localização fake
 setFakeLocButton.addEventListener('click', () => {
@@ -189,6 +231,7 @@ function animate() {
 // Inicia o loop de animação
 animate();
 
-console.log('🎉 LocAR.js Hello World carregado com sucesso!');
-console.log(`📍 Localização padrão: ${defaultLat}, ${defaultLon}`);
+console.log('🎉 LocAR.js com Localização Real carregado com sucesso!');
+console.log(`📍 Localização padrão: ${realLat}, ${realLon}`);
 console.log(`🎲 Caixa vermelha posicionada em: -23.978687, -46.316649`);
+console.log('📱 Obtendo localização real do usuário...');

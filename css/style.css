@@ -15,11 +15,13 @@ main {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     z-index: 1000;
+    border: 2px solid #007bff;
 }
 
 #gpsinput div {
@@ -29,9 +31,11 @@ main {
 #gpsinput input {
     width: 200px;
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid #007bff;
     border-radius: 5px;
     font-size: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
 }
 
 #gpsinput button {
@@ -44,10 +48,12 @@ main {
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
+    transition: background 0.3s ease;
 }
 
 #gpsinput button:hover {
     background: #0056b3;
+    transform: translateY(-2px);
 }
 
 #glscene {
