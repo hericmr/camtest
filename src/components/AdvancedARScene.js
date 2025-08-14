@@ -27,7 +27,7 @@ const AdvancedARScene = () => {
     const globalConfig = window.AR_CONFIG || {};
     return {
       // Propriedades de compatibilidade (mantidas para compatibilidade com código existente)
-      modelScale: 2.5,
+      modelScale: 5.0, // Aumentado de 2.5 para 5.0
       modelPosition: { x: 0, y: -1, z: -3 },
       modelRotation: { x: 0, y: 0, z: 0 },
       sensorSensitivity: 0.5,
@@ -38,10 +38,11 @@ const AdvancedARScene = () => {
       
       // Garante que as propriedades do modelo existam
       model: {
-        scale: 2.5,
+        scale: 5.0, // Aumentado de 2.5 para 5.0
         position: { x: 0, y: -1, z: -3 },
         rotation: { x: 0, y: 0, z: 0 },
         autoLoad: true,
+        color: 0x000000, // Cor preta padrão
         ...globalConfig.model
       },
       
@@ -350,6 +351,12 @@ const AdvancedARScene = () => {
   // Carregamento automático do modelo 3D
   const loadModel = useCallback(async () => {
     if (!sceneRef.current) return false;
+    
+    // Verifica se o modelo já está carregado para evitar duplicação
+    if (modelRef.current) {
+      console.log('⚠️ Modelo já está carregado, ignorando chamada duplicada');
+      return true;
+    }
 
     // Aguarda o carregamento do ar-config.js
     if (!window.AR_UTILS || !window.AR_UTILS.getModelPath) {
@@ -477,6 +484,32 @@ const AdvancedARScene = () => {
         modelConfig.rotation.y || AR_CONFIG.model.rotation.y,
         modelConfig.rotation.z || AR_CONFIG.model.rotation.z
       );
+
+      // Aplica cor ao modelo (usa configuração ou padrão preto)
+      const modelColor = modelConfig.color || AR_CONFIG.model.color || 0x000000;
+      const applyColor = (object) => {
+        if (object.material) {
+          if (Array.isArray(object.material)) {
+            object.material.forEach(mat => {
+              if (mat.color) {
+                mat.color.setHex(modelColor);
+                mat.needsUpdate = true;
+              }
+            });
+          } else {
+            if (object.material.color) {
+              object.material.color.setHex(modelColor);
+              object.material.needsUpdate = true;
+            }
+          }
+        }
+        
+        // Recursivamente aplica a todos os filhos
+        object.children.forEach(child => applyColor(child));
+      };
+      
+      applyColor(model);
+      console.log(`🎨 Cor aplicada ao modelo: #${modelColor.toString(16).padStart(6, '0')}`);
 
       // Adiciona o modelo à cena
       sceneRef.current.add(model);

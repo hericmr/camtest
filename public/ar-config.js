@@ -11,11 +11,12 @@ window.AR_CONFIG = {
   
   // Configurações do modelo 3D
   model: {
-    scale: 2.5,
+    scale: 5.0, // Aumentado de 2.5 para 5.0
     position: { x: 0, y: -1, z: -3 },
     rotation: { x: 0, y: 0, z: 0 },
     autoLoad: true,
-    file: null // Será definido dinamicamente
+    file: null, // Será definido dinamicamente
+    color: 0x000000 // Cor preta (hex)
   },
   
   // Configurações dos sensores
