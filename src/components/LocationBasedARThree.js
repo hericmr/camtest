@@ -84,7 +84,10 @@ const LocationBasedARThree = () => {
       setUserLocation({ latitude, longitude });
       setGpsAccuracy(accuracy);
       
-      addLog(`📍 GPS obtido: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (precisão: ${accuracy.toFixed(1)}m)`, 'success');
+      addLog(`📍 GPS obtido: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (precisão: ${accuracy.toFixed(1)}m)`, 'success', {
+        userLocation: { latitude, longitude, accuracy },
+        timestamp: new Date().toISOString()
+      });
       console.log('Localização obtida:', { latitude, longitude, accuracy });
       return { latitude, longitude, accuracy };
     } catch (err) {
@@ -223,7 +226,23 @@ const LocationBasedARThree = () => {
       const maxDistance = window.LOCATION_AR_CONFIG?.location?.maxDistanceForVisibility || 10000;
       if (window.LOCATION_AR_UTILS?.shouldShowObject && !window.LOCATION_AR_UTILS.shouldShowObject(distance, maxDistance)) {
         const distanceFormatted = window.LOCATION_AR_UTILS.formatDistance(distance);
-        addLog(`🚫 ${obj.name} muito distante (${distanceFormatted}), ocultado`, 'warning');
+        addLog(`🚫 ${obj.name} muito distante (${distanceFormatted}), ocultado`, 'warning', {
+          objectName: obj.name,
+          userLocation: { 
+            latitude: location.latitude, 
+            longitude: location.longitude 
+          },
+          objectLocation: { 
+            latitude: obj.position.latitude, 
+            longitude: obj.position.longitude 
+          },
+          distance: {
+            meters: distance,
+            formatted: distanceFormatted
+          },
+          reason: 'Objeto muito distante para ser visível',
+          timestamp: new Date().toISOString()
+        });
         console.log(`Objeto ${obj.name} muito distante (${distanceFormatted}), não será mostrado`);
         return; // Pula este objeto
       }
@@ -315,14 +334,36 @@ const LocationBasedARThree = () => {
         finalScale
       });
       
-      // Log de criação do objeto
+      // Log de criação do objeto com detalhes completos
       const distanceFormatted = window.LOCATION_AR_UTILS?.formatDistance ? 
         window.LOCATION_AR_UTILS.formatDistance(distance) : `${distance.toFixed(0)}m`;
       
+      const logDetails = {
+        objectName: obj.name,
+        userLocation: { 
+          latitude: location.latitude, 
+          longitude: location.longitude 
+        },
+        objectLocation: { 
+          latitude: obj.position.latitude, 
+          longitude: obj.position.longitude 
+        },
+        distance: {
+          meters: distance,
+          formatted: distanceFormatted
+        },
+        scale: {
+          original: obj.scale,
+          applied: finalScale,
+          isModified: finalScale !== obj.scale
+        },
+        timestamp: new Date().toISOString()
+      };
+      
       if (finalScale !== obj.scale) {
-        addLog(`🎯 ${obj.name} criado: ${distanceFormatted} (escala: ${finalScale.toFixed(2)}x)`, 'info');
+        addLog(`🎯 ${obj.name} criado: ${distanceFormatted} (escala: ${finalScale.toFixed(2)}x)`, 'info', logDetails);
       } else {
-        addLog(`🎯 ${obj.name} criado: ${distanceFormatted}`, 'success');
+        addLog(`🎯 ${obj.name} criado: ${distanceFormatted}`, 'success', logDetails);
       }
     });
 
@@ -371,41 +412,76 @@ const LocationBasedARThree = () => {
     try {
       setIsLoading(true);
       setError('');
-      addLog('🚀 Iniciando AR por localização...', 'info');
+      addLog('🚀 Iniciando AR por localização...', 'info', {
+        action: 'AR initialization',
+        config: window.LOCATION_AR_CONFIG?.location || 'default',
+        timestamp: new Date().toISOString()
+      });
 
       // Obtém localização do usuário
       const location = await requestLocationPermission();
       
       // Inicializa Three.js
-      addLog('🎨 Inicializando renderização 3D...', 'info');
+      addLog('🎨 Inicializando renderização 3D...', 'info', {
+        action: '3D rendering initialization',
+        timestamp: new Date().toISOString()
+      });
       const threeOk = initializeThreeJS();
       if (!threeOk) {
         throw new Error('Falha ao inicializar renderização 3D');
       }
-      addLog('✅ Renderização 3D inicializada', 'success');
+      addLog('✅ Renderização 3D inicializada', 'success', {
+        action: '3D rendering completed',
+        timestamp: new Date().toISOString()
+      });
 
       // Tenta inicializar a câmera (opcional)
       try {
-        addLog('📹 Inicializando câmera...', 'info');
+        addLog('📹 Inicializando câmera...', 'info', {
+          action: 'camera initialization',
+          timestamp: new Date().toISOString()
+        });
         await initializeCamera();
-        addLog('✅ Câmera inicializada', 'success');
+        addLog('✅ Câmera inicializada', 'success', {
+          action: 'camera completed',
+          timestamp: new Date().toISOString()
+        });
       } catch (cameraErr) {
-        addLog('⚠️ Câmera não disponível, continuando sem câmera', 'warning');
+        addLog('⚠️ Câmera não disponível, continuando sem câmera', 'warning', {
+          action: 'camera fallback',
+          error: cameraErr.message,
+          timestamp: new Date().toISOString()
+        });
         console.warn('Câmera não disponível, continuando sem câmera:', cameraErr);
       }
 
       // Cria objetos AR
-      addLog('🎯 Criando objetos AR...', 'info');
+      addLog('🎯 Criando objetos AR...', 'info', {
+        action: 'AR objects creation',
+        userLocation: location,
+        timestamp: new Date().toISOString()
+      });
       createARObjects(location);
       
       // Inicia o loop de renderização
-      addLog('🔄 Iniciando loop de renderização...', 'info');
+      addLog('🔄 Iniciando loop de renderização...', 'info', {
+        action: 'render loop start',
+        timestamp: new Date().toISOString()
+      });
       renderLoop();
       
-      addLog('🎉 AR por localização inicializado com sucesso!', 'success');
+      addLog('🎉 AR por localização inicializado com sucesso!', 'success', {
+        action: 'AR initialization completed',
+        userLocation: location,
+        timestamp: new Date().toISOString()
+      });
       
     } catch (err) {
-      addLog(`❌ Erro na inicialização: ${err.message}`, 'error');
+      addLog(`❌ Erro na inicialização: ${err.message}`, 'error', {
+        action: 'AR initialization failed',
+        error: err.message,
+        timestamp: new Date().toISOString()
+      });
       console.error('Erro ao inicializar AR:', err);
       setError(`Erro ao inicializar AR: ${err.message}`);
     } finally {
@@ -505,20 +581,31 @@ const LocationBasedARThree = () => {
 
     setArObjects(prev => [...prev, updatedObject]);
     
-    // Log do novo objeto criado
+    // Log do novo objeto criado com detalhes
     const distanceFormatted = window.LOCATION_AR_UTILS?.formatDistance ? 
       window.LOCATION_AR_UTILS.formatDistance(updatedObject.distance) : `${updatedObject.distance.toFixed(0)}m`;
-    addLog(`➕ Novo objeto criado: ${distanceFormatted}`, 'success');
+    
+    addLog(`➕ Novo objeto criado: ${distanceFormatted}`, 'success', {
+      objectName: updatedObject.name,
+      userLocation: userLocation,
+      objectLocation: updatedObject.position,
+      distance: {
+        meters: updatedObject.distance,
+        formatted: distanceFormatted
+      },
+      timestamp: new Date().toISOString()
+    });
   };
 
   // Função para adicionar logs visíveis
-  const addLog = (message, type = 'info') => {
+  const addLog = (message, type = 'info', details = null) => {
     const timestamp = new Date().toLocaleTimeString();
     const logEntry = {
       id: Date.now(),
       message,
       type,
-      timestamp
+      timestamp,
+      details
     };
     
     setLogs(prev => {
@@ -527,13 +614,17 @@ const LocationBasedARThree = () => {
     });
     
     // Também loga no console para debug
-    console.log(`[${timestamp}] ${message}`);
+    console.log(`[${timestamp}] ${message}`, details || '');
   };
 
   // Função para recalibrar localização
   const recalibrateLocation = async () => {
     setIsLoading(true);
-    addLog('🔄 Recalibrando localização GPS...', 'info');
+    addLog('🔄 Recalibrando localização GPS...', 'info', {
+      action: 'GPS recalibration',
+      currentLocation: userLocation,
+      timestamp: new Date().toISOString()
+    });
     await initializeLocationAR();
   };
 
@@ -848,8 +939,8 @@ const LocationBasedARThree = () => {
                 key={log.id}
                 style={{
                   marginBottom: '8px',
-                  padding: '5px',
-                  borderRadius: '3px',
+                  padding: '8px',
+                  borderRadius: '5px',
                   background: log.type === 'error' ? 'rgba(220, 53, 69, 0.3)' :
                              log.type === 'warning' ? 'rgba(255, 193, 7, 0.3)' :
                              log.type === 'success' ? 'rgba(40, 167, 69, 0.3)' :
@@ -865,13 +956,63 @@ const LocationBasedARThree = () => {
                 <div style={{ 
                   fontSize: '10px', 
                   opacity: 0.7, 
-                  marginBottom: '2px' 
+                  marginBottom: '4px' 
                 }}>
                   {log.timestamp}
                 </div>
-                <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
+                <div style={{ fontSize: '11px', lineHeight: '1.3', marginBottom: '4px' }}>
                   {log.message}
                 </div>
+                
+                {/* Detalhes expandidos do log */}
+                {log.details && (
+                  <div style={{ 
+                    fontSize: '10px', 
+                    opacity: 0.8,
+                    background: 'rgba(255,255,255,0.1)',
+                    padding: '6px',
+                    borderRadius: '3px',
+                    marginTop: '4px'
+                  }}>
+                    {log.details.userLocation && log.details.objectLocation && (
+                      <div style={{ marginBottom: '4px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>📍 Localizações:</div>
+                        <div style={{ marginLeft: '8px' }}>
+                          <div>👤 Usuário: {log.details.userLocation.latitude.toFixed(6)}, {log.details.userLocation.longitude.toFixed(6)}</div>
+                          <div>🎯 Objeto: {log.details.objectLocation.latitude.toFixed(6)}, {log.details.objectLocation.longitude.toFixed(6)}</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {log.details.distance && (
+                      <div style={{ marginBottom: '4px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>📏 Distância:</div>
+                        <div style={{ marginLeft: '8px' }}>
+                          <div>{log.details.distance.formatted} ({log.details.distance.meters.toFixed(1)}m)</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {log.details.scale && log.details.scale.isModified && (
+                      <div style={{ marginBottom: '4px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>📐 Escala:</div>
+                        <div style={{ marginLeft: '8px' }}>
+                          <div>Original: {log.details.scale.original}</div>
+                          <div>Aplicada: {log.details.scale.applied.toFixed(2)}x</div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {log.details.reason && (
+                      <div>
+                        <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>ℹ️ Motivo:</div>
+                        <div style={{ marginLeft: '8px' }}>
+                          {log.details.reason}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
