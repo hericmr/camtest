@@ -53,13 +53,21 @@ locar.on("gpsupdate", (pos, distMoved) => {
             `${import.meta.env.BASE_URL}trozoba.glb`,
             function (gltf) {
                 const model = gltf.scene;
-                model.scale.set(10, 10, 10); // Adjust scale if necessary
+                model.scale.set(20, 20, 20); // Increased size
+
+                // Apply black color
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.material = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Black color
+                    }
+                });
+
                 locar.add(
                     model,
                     pos.coords.longitude,
-                    pos.coords.latitude + 0.0005 // ~55m North
+                    pos.coords.latitude - 0.0005 // Moved to South
                 );
-                console.log('Modelo trozoba.glb adicionado ao norte.');
+                console.log('Modelo trozoba.glb adicionado ao sul, maior e preto.');
             },
             undefined,
             function (error) {
