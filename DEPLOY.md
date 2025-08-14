@@ -24,6 +24,10 @@
 
 ### **1. Deploy Automático (Recomendado)**
 ```bash
+# Usando npm script
+npm run deploy
+
+# Ou diretamente
 ./deploy.sh
 ```
 
@@ -84,6 +88,8 @@ npm run build
 npm run preview
 
 # Deploy completo
+npm run deploy
+# ou
 ./deploy.sh
 ```
 
