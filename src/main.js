@@ -16,6 +16,9 @@ document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const locar = new LocAR.LocationBased(scene, camera);
 
+// ✨ Variável global para o modelo trozoba.glb
+let trozobaModel = null;
+
 // Add lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
 scene.add(ambientLight);
@@ -41,7 +44,6 @@ const cam = new LocAR.Webcam({
 });
 
 let firstLocation = true; // Flag para executar apenas uma vez
-let trozobaModel = null; // Variável para armazenar o modelo trozoba.glb
 
 const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 
@@ -141,9 +143,12 @@ renderer.setAnimationLoop(animate);
 
 function animate() {
     deviceOrientationControls.update();
+    
+    // ✨ Rotação contínua do modelo trozoba.glb
     if (trozobaModel) {
-        trozobaModel.rotation.y += 0.01; // Ajuste a velocidade de rotação conforme necessário
+        trozobaModel.rotation.y += 0.02; // Rotação mais rápida para ser mais visível
     }
+    
     renderer.render(scene, camera);
 }
 
