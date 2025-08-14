@@ -1,5 +1,6 @@
 // AR.js com A-Frame para localização
 // Os scripts são carregados via CDN no HTML
+import { LOCATION_CONFIG, getUserLocationFormatted, getObjectLocationFormatted } from './config.js';
 
 // Aguarda o A-Frame carregar
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,25 +18,26 @@ document.addEventListener('DOMContentLoaded', () => {
     camera.setAttribute('gps-camera-rotation-reader', '');
     scene.appendChild(camera);
     
-    // Cria a caixa vermelha
+    // Cria a caixa vermelha usando configurações
     const box = document.createElement('a-box');
-    box.setAttribute('position', '0 0 -10');
-    box.setAttribute('geometry', 'width: 2; height: 2; depth: 2');
-    box.setAttribute('material', 'color: red');
-    box.setAttribute('gps-entity-place', 'latitude: -46.31637363516056; longitude: -23.97882477971589');
+    box.setAttribute('position', `${LOCATION_CONFIG.arObject.position.x} ${LOCATION_CONFIG.arObject.position.y} ${LOCATION_CONFIG.arObject.position.z}`);
+    box.setAttribute('geometry', `width: ${LOCATION_CONFIG.arObject.geometry.width}; height: ${LOCATION_CONFIG.arObject.geometry.height}; depth: ${LOCATION_CONFIG.arObject.geometry.depth}`);
+    box.setAttribute('material', `color: ${LOCATION_CONFIG.arObject.material.color}`);
+    box.setAttribute('gps-entity-place', `latitude: ${LOCATION_CONFIG.objectLocation.latitude}; longitude: ${LOCATION_CONFIG.objectLocation.longitude}`);
     
     // Adiciona a caixa à cena
     scene.appendChild(box);
     
-    // Adiciona informações de debug
+    // Adiciona informações de debug usando configurações
     const info = document.getElementById('info');
     if (info) {
         info.innerHTML = `
             <h3>🎯 AR.js - Hello World</h3>
-            <div>📍 Localização: -23.978824, -46.316374</div>
-            <div>🎲 Objeto: Caixa vermelha a 10m ao norte</div>
+            <div>📍 Localização: <span id="user-location">${getUserLocationFormatted()}</span></div>
+            <div>🎲 Objeto: ${LOCATION_CONFIG.objectLocation.description}</div>
             <div>📱 Use em dispositivo móvel com GPS</div>
             <div>🌐 A-Frame + AR.js</div>
+            <div>🌍 ${LOCATION_CONFIG.userLocation.description}</div>
         `;
     }
     

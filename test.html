@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Configurações - AR.js</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>Teste de Configurações</h1>
+    <div id="test-info"></div>
+    
+    <script type="module">
+        import { LOCATION_CONFIG, getUserLocationFormatted, getObjectLocationFormatted } from './src/config.js';
+        
+        document.getElementById('test-info').innerHTML = `
+            <h2>Configurações Carregadas:</h2>
+            <p><strong>Usuário:</strong> ${getUserLocationFormatted()}</p>
+            <p><strong>Objeto:</strong> ${getObjectLocationFormatted()}</p>
+            <p><strong>Descrição do Objeto:</strong> ${LOCATION_CONFIG.objectLocation.description}</p>
+            <p><strong>Localização do Usuário:</strong> ${LOCATION_CONFIG.userLocation.description}</p>
+        `;
+        
+        console.log('Configurações:', LOCATION_CONFIG);
+    </script>
+</body>
+</html>

@@ -63,8 +63,8 @@ Abra `http://localhost:5173` no seu navegador
 
 ## 🎯 **Localizações**
 
-- **👤 Usuário**: `-0.72, 51.05` (Londres, Reino Unido)
-- **🎲 Caixa Vermelha**: `-0.72, 51.0501` (10m ao norte)
+- **👤 Usuário**: `-23.978824, -46.316374` (São Paulo, Brasil)
+- **🎲 Caixa Vermelha**: `-23.978687, -46.316649` (aproximadamente 30m de distância)
 - **🧭 Direção**: Norte (padrão)
 
 ## 🔧 **Desenvolvimento**
