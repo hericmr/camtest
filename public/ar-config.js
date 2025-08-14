@@ -181,12 +181,18 @@ window.AR_UTILS = {
 
 // Função para determinar o caminho correto do modelo baseado no ambiente
 window.AR_UTILS.getModelPath = (filename) => {
+  console.log('🔧 getModelPath chamado com:', filename);
+  console.log('📍 Hostname:', window.location.hostname);
+  console.log('📍 Pathname:', window.location.pathname);
+  
   // Se estamos em GitHub Pages, adiciona o nome do repositório ao caminho
   if (window.location.hostname === 'hericmr.github.io') {
     const pathParts = window.location.pathname.split('/');
     const repoName = pathParts[1]; // O primeiro segmento após o domínio
     if (repoName && repoName !== '') {
-      return `/${repoName}/${filename}`;
+      const result = `/${repoName}/${filename}`;
+      console.log('🌐 GitHub Pages - caminho calculado:', result);
+      return result;
     }
   }
   
@@ -196,7 +202,9 @@ window.AR_UTILS.getModelPath = (filename) => {
     ? window.location.pathname 
     : window.location.pathname + '/';
   
-  return basePath + filename;
+  const result = basePath + filename;
+  console.log('🏠 Desenvolvimento local - caminho calculado:', result);
+  return result;
 };
 
 // Função para obter o caminho base correto

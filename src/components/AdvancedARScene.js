@@ -351,9 +351,25 @@ const AdvancedARScene = () => {
   const loadModel = useCallback(async () => {
     if (!sceneRef.current) return false;
 
+    // Aguarda o carregamento do ar-config.js
+    if (!window.AR_UTILS || !window.AR_UTILS.getModelPath) {
+      console.log('⏳ Aguardando carregamento do ar-config.js...');
+      await new Promise(resolve => {
+        const checkARUtils = () => {
+          if (window.AR_UTILS && window.AR_UTILS.getModelPath) {
+            console.log('✅ ar-config.js carregado');
+            resolve();
+          } else {
+            setTimeout(checkARUtils, 100);
+          }
+        };
+        checkARUtils();
+      });
+    }
+
     // Declara variáveis no escopo da função para que sejam acessíveis no catch
     let modelConfig = window.AR_CONFIG?.model || AR_CONFIG;
-    let modelFile = modelConfig.file || (window.AR_UTILS?.getModelPath ? window.AR_UTILS.getModelPath('model-trozoba.glb') : 'model-trozoba.glb');
+    let modelFile = modelConfig.file || (window.AR_UTILS?.getModelPath ? window.AR_UTILS.getModelPath('models/model-trozoba.glb') : 'models/model-trozoba.glb');
     let finalModelFile = modelFile; // Variável para armazenar o caminho final
 
     try {
@@ -389,7 +405,7 @@ const AdvancedARScene = () => {
         // Se temos a função de teste de acessibilidade, usa ela
         if (window.AR_UTILS?.testModelAccessibility) {
           console.log('🧪 Usando função de teste de acessibilidade...');
-          const workingPath = await window.AR_UTILS.testModelAccessibility('model-trozoba.glb');
+          const workingPath = await window.AR_UTILS.testModelAccessibility('models/model-trozoba.glb');
           if (workingPath) {
             console.log('✅ Caminho alternativo encontrado:', workingPath);
             finalModelFile = workingPath;
