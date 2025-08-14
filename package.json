@@ -1,0 +1,18 @@
+{
+  "name": "locar-tutorial",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.148.0",
+    "locar": "latest"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  }
+}

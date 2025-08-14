@@ -1,93 +1,189 @@
 import * as THREE from 'three';
 import * as LocAR from 'locar';
 
-const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.001, 1000);
+// ========================================
+// CONFIGURAÇÃO BÁSICA THREE.JS
+// ========================================
 
-const renderer = new THREE.WebGLRenderer({
-	canvas: document.getElementById('glscene')
-});
-renderer.setSize(window.innerWidth, window.innerHeight);
-//document.body.appendChild(renderer.domElement);
-
+// Criação da cena principal
 const scene = new THREE.Scene();
 
-const locar = new LocAR.LocationBased(scene, camera);
+// Configuração da câmera perspectiva
+const camera = new THREE.PerspectiveCamera(
+    60,                                    // Campo de visão (FOV)
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.001,                                 // Near plane (muito próximo para AR)
+    100                                    // Far plane
+);
 
-window.addEventListener("resize", e => {
+// Configuração do renderizador WebGL
+const renderer = new THREE.WebGLRenderer({ 
+    antialias: true,                       // Suavização de bordas
+    alpha: true                            // Fundo transparente
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio); // Melhor qualidade em telas Retina
+document.body.appendChild(renderer.domElement);
+
+// ========================================
+// RESPONSIVIDADE
+// ========================================
+
+window.addEventListener("resize", () => {
+    // Atualiza tamanho do renderizador
     renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    // Atualiza aspect ratio da câmera
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    
+    console.log('Tela redimensionada:', window.innerWidth, 'x', window.innerHeight);
 });
 
-const cam = new LocAR.Webcam( { 
-    idealWidth: 1024, 
-    idealHeight: 768,
-    onVideoStarted: texture => {
-        scene.background = texture;        
-    }
-}, null);
+// ========================================
+// CRIAÇÃO DO OBJETO 3D
+// ========================================
 
-let firstLocation = true;
+// Geometria: cubo 2x2x2 metros
+const boxGeometry = new THREE.BoxGeometry(2, 2, 2);
 
-let deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
+// Material: vermelho básico (sem necessidade de iluminação)
+const boxMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xff0000,           // Vermelho
+    wireframe: false,          // Sólido, não apenas wireframe
+    transparent: false         // Opaco
+});
 
-locar.on("gpsupdate", (pos, distMoved) => {
-    if(firstLocation) {
-        alert(`Got the initial location: longitude ${pos.coords.longitude}, latitude ${pos.coords.latitude}`);
+// Mesh: combinação de geometria + material
+const redCube = new THREE.Mesh(boxGeometry, boxMaterial);
 
-        const boxProps = [{
-            latDis: 0.0005,
-            lonDis: 0,
-            colour: 0xff0000
-        }, {
-            latDis: -0.0005,
-            lonDis: 0,
-            colour: 0xffff00
-        }, {
-            latDis: 0,
-            lonDis: -0.0005,
-            colour: 0x00ffff
-        }, {
-            latDis: 0,
-            lonDis: 0.0005,
-            colour: 0x00ff00
-        }];
+// ========================================
+// CONFIGURAÇÃO LOCAR.JS
+// ========================================
 
-        const geom = new THREE.BoxGeometry(10,10,10);
+// Inicialização do gerenciador de localização AR
+const locationManager = new LocAR.LocationBased(scene, camera);
 
-        for(const boxProp of boxProps) {
-            const mesh = new THREE.Mesh(
-                geom, 
-                new THREE.MeshBasicMaterial({color: boxProp.colour})
-            );
+// Configuração da webcam
+const webcam = new LocAR.Webcam({
+    idealWidth: 1024,          // Largura ideal do vídeo
+    idealHeight: 768,          // Altura ideal do vídeo
+    
+    // Callback executado quando a webcam está pronta
+    onVideoStarted: (videoTexture) => {
+        // Define o vídeo da webcam como fundo da cena
+        scene.background = videoTexture;
         
-            console.log(`adding at ${pos.coords.longitude+boxProp.lonDis},${pos.coords.latitude+boxProp.latDis}`);    
-            locar.add(
-                mesh, 
-                pos.coords.longitude + boxProp.lonDis, 
-                pos.coords.latitude + boxProp.latDis
-            );
+        // Remove indicador de loading
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
         }
         
-        firstLocation = false;
+        console.log('Webcam inicializada com sucesso!');
+        console.log('Resolução do vídeo:', videoTexture.image.videoWidth, 'x', videoTexture.image.videoHeight);
     }
 });
 
-locar.startGps();
+// ========================================
+// POSICIONAMENTO GEOGRÁFICO
+// ========================================
 
-document.getElementById("setFakeLoc").addEventListener("click", e => {
-    alert("Using fake input GPS, not real GPS location");
-    locar.stopGps();
-    locar.fakeGps(
-        parseFloat(document.getElementById("fakeLon").value),
-        parseFloat(document.getElementById("fakeLat").value)
-    );
+// Coordenadas de exemplo (Greenwich, Londres)
+const LONGITUDE_BASE = -0.72;    // Longitude base
+const LATITUDE_BASE = 51.05;     // Latitude base
+
+// Define posição "falsa" do usuário (GPS simulado)
+locationManager.fakeGps(LONGITUDE_BASE, LATITUDE_BASE);
+
+// Adiciona o cubo ligeiramente ao norte da posição do usuário
+locationManager.add(
+    redCube,                     // Objeto 3D
+    LONGITUDE_BASE,              // Mesma longitude
+    LATITUDE_BASE + 0.0001       // Ligeiramente ao norte (~11 metros)
+);
+
+console.log('Cubo posicionado em:', {
+    longitude: LONGITUDE_BASE,
+    latitude: LATITUDE_BASE + 0.0001,
+    offset: '~11 metros ao norte'
 });
 
-renderer.setAnimationLoop(animate);
+// ========================================
+// CONTROLES DE MOUSE PARA DESKTOP
+// ========================================
 
+// Configurações de rotação
+const ROTATION_STEP = THREE.MathUtils.degToRad(2); // 2 graus por movimento
+
+// Variáveis de controle
+let isMouseDown = false;
+let lastMouseX = 0;
+
+// Event listeners para mouse
+window.addEventListener("mousedown", (event) => {
+    isMouseDown = true;
+    lastMouseX = event.clientX;
+    console.log('Mouse pressionado');
+});
+
+window.addEventListener("mouseup", () => {
+    isMouseDown = false;
+    console.log('Mouse liberado');
+});
+
+window.addEventListener("mousemove", (event) => {
+    // Só processa se o mouse estiver pressionado
+    if (!isMouseDown) return;
+    
+    const currentMouseX = event.clientX;
+    const deltaX = currentMouseX - lastMouseX;
+    
+    if (deltaX < 0) {
+        // Movimento para esquerda: rotaciona no sentido anti-horário
+        camera.rotation.y -= ROTATION_STEP;
+        
+        // Mantém rotação no intervalo [0, 2π]
+        if (camera.rotation.y < 0) {
+            camera.rotation.y += 2 * Math.PI;
+        }
+    } else if (deltaX > 0) {
+        // Movimento para direita: rotaciona no sentido horário
+        camera.rotation.y += ROTATION_STEP;
+        
+        // Mantém rotação no intervalo [0, 2π]
+        if (camera.rotation.y > 2 * Math.PI) {
+            camera.rotation.y -= 2 * Math.PI;
+        }
+    }
+    
+    lastMouseX = currentMouseX;
+    
+    // Log para debugging
+    const rotationDegrees = THREE.MathUtils.radToDeg(camera.rotation.y);
+    console.log('Rotação da câmera:', rotationDegrees.toFixed(1), '°');
+});
+
+// Informações para o usuário
+console.log('💡 Controles de mouse ativados!');
+console.log('   - Clique e arraste para rotacionar a câmera');
+console.log('   - O cubo deve aparecer ao norte (rotação ~0°)');
+
+// ========================================
+// LOOP DE RENDERIZAÇÃO
+// ========================================
+
+// Define função de animação contínua
 function animate() {
-    deviceOrientationControls?.update();
+    // Renderiza a cena
     renderer.render(scene, camera);
+    
+    // Opcional: adicionar rotação ao cubo para visualização
+    // redCube.rotation.y += 0.01;
 }
 
+// Inicia o loop de renderização
+renderer.setAnimationLoop(animate);
+
+console.log('Sistema AR inicializado!');
+console.log('Posição do usuário (simulada):', LONGITUDE_BASE, LATITUDE_BASE);
