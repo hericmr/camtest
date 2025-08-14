@@ -54,7 +54,7 @@ locar.on("gpsupdate", (pos, distMoved) => {
             function (gltf) {
                 const model = gltf.scene;
                 model.scale.set(30, 30, 30); // Increased size
-                model.position.set(-5, 0, -10); // Adjust position: -X (left), -Z (forward)
+                model.position.set(-20, -5, -30); // Adjust position: -X (left), -Z (forward)
 
                 // Apply black color
                 model.traverse((node) => {
