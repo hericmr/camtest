@@ -104,30 +104,79 @@ function animate() {
 const backgroundAudio = document.getElementById('background-audio');
 if (backgroundAudio) {
     backgroundAudio.src = `${import.meta.env.BASE_URL}trozoba.mp3`;
+    
+    // ✨ Configurações adicionais para garantir reprodução completa
+    backgroundAudio.preload = 'auto';
+    backgroundAudio.volume = 1.0;
+    
+    // Listener para verificar se o áudio carregou completamente
+    backgroundAudio.addEventListener('loadedmetadata', () => {
+        console.log(`Áudio carregado: ${backgroundAudio.duration} segundos (${Math.floor(backgroundAudio.duration / 60)}:${Math.floor(backgroundAudio.duration % 60).toString().padStart(2, '0')})`);
+    });
+    
+    // Listener para verificar se há erros no áudio
+    backgroundAudio.addEventListener('error', (e) => {
+        console.error('Erro no áudio:', e);
+    });
+    
+    // ✨ Listener para verificar se o loop está funcionando
+    backgroundAudio.addEventListener('ended', () => {
+        console.log('Áudio terminou, iniciando loop...');
+    });
+    
+    // ✨ Listener para verificar o progresso da reprodução
+    backgroundAudio.addEventListener('timeupdate', () => {
+        const currentTime = Math.floor(backgroundAudio.currentTime);
+        const duration = Math.floor(backgroundAudio.duration);
+        if (currentTime % 30 === 0 && currentTime > 0) { // Log a cada 30 segundos
+            console.log(`Áudio reproduzindo: ${Math.floor(currentTime / 60)}:${(currentTime % 60).toString().padStart(2, '0')} / ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`);
+        }
+    });
 }
 
 function tryPlayAudio() {
     if (backgroundAudio) {
+        // ✨ Garantir que o loop está ativado
         backgroundAudio.loop = true;
-        backgroundAudio.play()
-            .then(() => {
-                console.log('Audio playing automatically.');
-            })
-            .catch(error => {
-                console.warn('Autoplay prevented:', error);
-                // Show a message or button to the user to play audio
-                document.addEventListener('click', userPlayAudio, { once: true });
-                document.addEventListener('touchstart', userPlayAudio, { once: true });
-            });
+        
+        // ✨ Verificar se o áudio está pronto para reprodução
+        if (backgroundAudio.readyState >= 2) { // HAVE_CURRENT_DATA
+            backgroundAudio.play()
+                .then(() => {
+                    console.log('Audio playing automatically.');
+                    console.log(`Duração do áudio: ${Math.floor(backgroundAudio.duration / 60)}:${Math.floor(backgroundAudio.duration % 60).toString().padStart(2, '0')}`);
+                })
+                .catch(error => {
+                    console.warn('Autoplay prevented:', error);
+                    // Show a message or button to the user to play audio
+                    document.addEventListener('click', userPlayAudio, { once: true });
+                    document.addEventListener('touchstart', userPlayAudio, { once: true });
+                });
+        } else {
+            // Aguardar o áudio carregar
+            backgroundAudio.addEventListener('canplay', () => {
+                backgroundAudio.play()
+                    .then(() => {
+                        console.log('Audio playing after loading.');
+                        console.log(`Duração do áudio: ${Math.floor(backgroundAudio.duration / 60)}:${Math.floor(backgroundAudio.duration % 60).toString().padStart(2, '0')}`);
+                    })
+                    .catch(error => {
+                        console.error('Error playing audio after loading:', error);
+                    });
+            }, { once: true });
+        }
     }
 }
 
 function userPlayAudio() {
     if (backgroundAudio) {
+        // ✨ Garantir que o loop está ativado
         backgroundAudio.loop = true;
+        
         backgroundAudio.play()
             .then(() => {
                 console.log('Audio playing after user interaction.');
+                console.log(`Duração do áudio: ${Math.floor(backgroundAudio.duration / 60)}:${Math.floor(backgroundAudio.duration % 60).toString().padStart(2, '0')}`);
             })
             .catch(error => {
                 console.error('Error playing audio after user interaction:', error);
