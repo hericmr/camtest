@@ -108,6 +108,7 @@ if (backgroundAudio) {
 
 function tryPlayAudio() {
     if (backgroundAudio) {
+        backgroundAudio.loop = true;
         backgroundAudio.play()
             .then(() => {
                 console.log('Audio playing automatically.');
@@ -123,6 +124,7 @@ function tryPlayAudio() {
 
 function userPlayAudio() {
     if (backgroundAudio) {
+        backgroundAudio.loop = true;
         backgroundAudio.play()
             .then(() => {
                 console.log('Audio playing after user interaction.');
