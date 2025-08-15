@@ -94,7 +94,7 @@ function animate() {
     
     // ✨ Rotação contínua do modelo trozoba.glb
     if (trozobaModel) {
-        trozobaModel.rotation.y += 0.02; // Rotação mais rápida para ser mais visível
+        trozobaModel.rotation.y += 0.01; // Rotação mais rápida para ser mais visível
     }
     
     renderer.render(scene, camera);
