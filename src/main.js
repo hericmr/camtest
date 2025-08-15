@@ -18,6 +18,7 @@ const locar = new LocAR.LocationBased(scene, camera);
 
 // ✨ Variável global para o modelo trozoba.glb
 let trozobaModel = null;
+let modelLoaded = false; // Flag para indicar se o modelo já foi carregado
 
 // Add lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -25,6 +26,44 @@ scene.add(ambientLight);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
 directionalLight.position.set(0, 1, 1);
 scene.add(directionalLight);
+
+// ✨ Função para pré-carregar o modelo 3D
+function preloadModel() {
+    console.log('🚀 Pré-carregando modelo trozoba.glb...');
+    
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+    
+    loader.load(
+        `${import.meta.env.BASE_URL}trozoba.glb`,
+        function (gltf) {
+            console.log('✅ Modelo trozoba.glb pré-carregado com sucesso!');
+            
+            const model = gltf.scene;
+            model.scale.set(80, 80, 80);
+            model.position.set(-10, -2, -15);
+
+            // Otimização: aplicar material de forma mais eficiente
+            const blackMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            model.traverse((node) => {
+                if (node.isMesh) {
+                    node.material = blackMaterial;
+                }
+            });
+
+            trozobaModel = model;
+            modelLoaded = true;
+            console.log('🎯 Modelo pré-carregado e pronto para uso!');
+        },
+        function (progress) {
+            const percentComplete = Math.round((progress.loaded / progress.total) * 100);
+            console.log(`📥 Pré-carregando modelo: ${percentComplete}% (${(progress.loaded / 1024 / 1024).toFixed(2)}MB / ${(progress.total / 1024 / 1024).toFixed(2)}MB)`);
+        },
+        function (error) {
+            console.error('❌ Erro ao pré-carregar modelo:', error);
+        }
+    );
+}
 
 
 // Responsividade
@@ -50,36 +89,56 @@ const deviceOrientationControls = new LocAR.DeviceOrientationControls(camera);
 // ✨ Listener para atualizações de GPS
 locar.on("gpsupdate", (pos, distMoved) => {
     if (firstLocation) {
-        // ✨ Carregar apenas o modelo trozoba.glb na posição Oeste
-        const loader = new GLTFLoader();
-        loader.load(
-            `${import.meta.env.BASE_URL}trozoba.glb`,
-            function (gltf) {
-                const model = gltf.scene;
-                model.scale.set(80, 80, 80); // Aumentado significativamente o tamanho
-                model.position.set(-10, -2, -15); // Posicionado mais próximo e centralizado
+        if (modelLoaded && trozobaModel) {
+            // ✨ Usar modelo já pré-carregado
+            console.log('🎯 Usando modelo pré-carregado para posicionamento...');
+            
+            locar.add(
+                trozobaModel,
+                pos.coords.longitude - 0.0005, // ~55m a oeste
+                pos.coords.latitude
+            );
+            console.log('🎯 Modelo trozoba.glb posicionado a oeste da posição atual.');
+        } else {
+            // ✨ Fallback: carregar modelo se não foi pré-carregado
+            console.log('⚠️ Modelo não foi pré-carregado, carregando agora...');
+            
+            const loader = new GLTFLoader();
+            loader.setCrossOrigin('anonymous');
+            
+            loader.load(
+                `${import.meta.env.BASE_URL}trozoba.glb`,
+                function (gltf) {
+                    console.log('✅ Modelo trozoba.glb carregado com sucesso!');
+                    
+                    const model = gltf.scene;
+                    model.scale.set(80, 80, 80);
+                    model.position.set(-10, -2, -15);
 
-                // Apply black color
-                model.traverse((node) => {
-                    if (node.isMesh) {
-                        node.material = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Black color
-                    }
-                });
+                    const blackMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+                    model.traverse((node) => {
+                        if (node.isMesh) {
+                            node.material = blackMaterial;
+                        }
+                    });
 
-                // Posicionar o modelo a oeste da posição atual
-                trozobaModel = model; // Armazena o modelo na variável global
-                locar.add(
-                    trozobaModel,
-                    pos.coords.longitude - 0.0005, // ~55m a oeste
-                    pos.coords.latitude
-                );
-                console.log('Modelo trozoba.glb carregado a oeste da posição atual.');
-            },
-            undefined,
-            function (error) {
-                console.error('Erro ao carregar trozoba.glb:', error);
-            }
-        );
+                    trozobaModel = model;
+                    locar.add(
+                        trozobaModel,
+                        pos.coords.longitude - 0.0005,
+                        pos.coords.latitude
+                    );
+                    console.log('🎯 Modelo trozoba.glb posicionado a oeste da posição atual.');
+                },
+                function (progress) {
+                    const percentComplete = Math.round((progress.loaded / progress.total) * 100);
+                    console.log(`📥 Carregando modelo: ${percentComplete}% (${(progress.loaded / 1024 / 1024).toFixed(2)}MB / ${(progress.total / 1024 / 1024).toFixed(2)}MB)`);
+                },
+                function (error) {
+                    console.error('❌ Erro ao carregar trozoba.glb:', error);
+                }
+            );
+        }
         
         firstLocation = false;
     }
@@ -185,3 +244,6 @@ function userPlayAudio() {
 }
 
 tryPlayAudio();
+
+// ✨ Iniciar pré-carregamento do modelo 3D
+preloadModel();
